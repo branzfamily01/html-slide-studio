@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#15213a">
+  <meta name="description" content="HTML・デザインシステム・フォント・AI画像制作を統合し、編集可能なPowerPointへ変換するブラウザアプリ">
+  <title>HTML Slide Studio 2.0</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Klee+One:wght@400;600&family=Noto+Sans+JP:wght@300;400;500;600;700;800&family=Noto+Serif+JP:wght@400;500;600;700&family=Yusei+Magic&display=swap" rel="stylesheet">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="styles.css?v=6">
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <header class="topbar">
+      <div class="brand-group">
+        <button class="icon-btn mobile-only" id="mobileNavBtn" aria-label="スライド一覧を開く" title="スライド一覧"><span class="icon icon-panel" aria-hidden="true"></span></button>
+        <a class="brand" href="#" id="brandHome" aria-label="HTML Slide Studio ホーム">
+          <span class="brand-mark" aria-hidden="true"><span>&lt;/&gt;</span></span>
+          <span class="brand-copy"><strong>HTML Slide</strong><small>STUDIO 2.0</small></span>
+        </a>
+        <span class="separator" aria-hidden="true"></span>
+        <label class="project-name-wrap" aria-label="プロジェクト名">
+          <input id="projectName" class="project-name" value="AI活用レポート" maxlength="80">
+          <span class="save-state" id="saveState"><i></i> この端末に保存済み</span>
+        </label>
+      </div>
+
+      <nav class="top-actions" aria-label="主要操作">
+        <button class="btn btn-quiet compact-hide" id="undoBtn" title="元に戻す (⌘/Ctrl+Z)" disabled><span class="icon icon-undo" aria-hidden="true"></span></button>
+        <button class="btn btn-quiet compact-hide" id="redoBtn" title="やり直す (⌘/Ctrl+Shift+Z)" disabled><span class="icon icon-redo" aria-hidden="true"></span></button>
+        <button class="btn btn-studio" id="studioToolsBtn"><span class="icon icon-spark" aria-hidden="true"></span><span class="btn-label">デザイン制作</span><b>NEW</b></button>
+        <button class="btn btn-quiet" id="overviewBtn"><span class="icon icon-grid" aria-hidden="true"></span><span class="btn-label">一覧</span></button>
+        <button class="btn btn-quiet" id="importBtn"><span class="icon icon-code" aria-hidden="true"></span><span class="btn-label">HTMLを読込</span></button>
+        <button class="btn btn-quiet compact-hide" id="assetBtn"><span class="icon icon-image" aria-hidden="true"></span><span class="btn-label">画像を追加</span></button>
+        <button class="btn btn-outline" id="downloadHtmlBtn"><span class="icon icon-download" aria-hidden="true"></span><span class="btn-label">書き出し</span></button>
+        <button class="btn btn-primary" id="exportBtn"><span class="ppt-badge">P</span><span>PowerPoint</span></button>
+        <button class="icon-btn mobile-only" id="mobileInspectorBtn" aria-label="書式パネルを開く" title="書式"><span class="icon icon-sliders" aria-hidden="true"></span></button>
+      </nav>
+    </header>
+
+    <div class="workspace">
+      <aside class="slide-panel" id="slidePanel" aria-label="スライド一覧">
+        <div class="panel-tabs" role="tablist" aria-label="左パネル">
+          <button class="panel-tab is-active" id="slidesTab" role="tab" aria-selected="true">スライド</button>
+          <button class="panel-tab" id="layersTab" role="tab" aria-selected="false">レイヤー</button>
+        </div>
+        <div class="panel-summary"><span>デッキ</span><strong id="slideCount">3</strong></div>
+        <div class="slide-list" id="slideList" aria-label="スライドのサムネイル"></div>
+        <div class="layer-list" id="layerList" hidden></div>
+        <button class="add-slide-btn" id="addSlideBtn"><span>＋</span> 新しいスライド</button>
+      </aside>
+
+      <main class="stage" id="stage">
+        <div class="stage-toolbar">
+          <div class="mode-switch" role="group" aria-label="編集モード">
+            <button class="is-active" id="editModeBtn"><span class="status-dot"></span>編集</button>
+            <button id="previewModeBtn"><span class="icon icon-play" aria-hidden="true"></span>プレビュー</button>
+          </div>
+          <div class="selection-tools" id="selectionTools" hidden>
+            <span class="element-tag" id="elementTag">TEXT</span>
+            <button class="mini-btn" id="duplicateElementBtn" title="要素を複製"><span class="icon icon-copy" aria-hidden="true"></span></button>
+            <button class="mini-btn danger" id="deleteElementBtn" title="要素を削除"><span class="icon icon-trash" aria-hidden="true"></span></button>
+          </div>
+          <div class="stage-meta">
+            <span id="slidePosition">1 / 3</span>
+            <button class="mini-btn" id="zoomOutBtn" title="縮小">−</button><span id="zoomValue">自動</span><button class="mini-btn" id="zoomInBtn" title="拡大">＋</button>
+          </div>
+        </div>
+
+        <div class="canvas-area" id="canvasArea">
+          <div class="canvas-wrap" id="canvasWrap"><iframe id="slideFrame" class="slide-frame" title="編集中のスライド" sandbox="allow-same-origin"></iframe></div>
+          <div class="canvas-hint" id="canvasHint"><span>クリックで選択</span><i></i><span>ダブルクリックで文字編集</span></div>
+        </div>
+
+        <div class="overview" id="overview" hidden>
+          <div class="overview-head"><div><p>OVERVIEW</p><h1>スライド一覧</h1></div><button class="btn btn-outline" id="closeOverviewBtn">編集に戻る</button></div>
+          <div class="overview-grid" id="overviewGrid"></div>
+        </div>
+      </main>
+
+      <aside class="inspector" id="inspector" aria-label="書式設定">
+        <div class="inspector-head"><div><span class="eyebrow">INSPECTOR</span><h2>書式</h2></div><button class="icon-btn mobile-only" id="closeInspectorBtn" aria-label="閉じる">×</button></div>
+        <div class="empty-inspector" id="emptyInspector">
+          <div class="empty-icon"><span class="icon icon-cursor" aria-hidden="true"></span></div>
+          <h3>要素を選択</h3><p>スライド上の文字・図形・画像をクリックすると、ここで細かく調整できます。</p>
+          <div class="support-pills"><span>文字</span><span>配置</span><span>色</span><span>画像</span></div>
+        </div>
+        <form class="property-form" id="propertyForm" hidden>
+          <section class="property-section" id="textSection">
+            <button type="button" class="section-title" aria-expanded="true"><span>テキスト</span><i></i></button>
+            <div class="section-body">
+              <textarea id="textValue" rows="3" aria-label="テキスト内容"></textarea>
+              <div class="font-family-field"><label><span>フォント</span><select id="elementFontFamily" aria-label="選択要素のフォント"></select></label><button type="button" id="openFontStudioBtn">フォントを追加・管理</button></div>
+              <div class="field-grid three">
+                <label><span>サイズ</span><div class="unit-input"><input id="fontSize" type="number" min="6" max="300" step="1"><em>px</em></div></label>
+                <label><span>太さ</span><select id="fontWeight"><option value="300">Light</option><option value="400">Regular</option><option value="500">Medium</option><option value="600">Semi</option><option value="700">Bold</option><option value="800">Extra</option></select></label>
+                <label><span>行間</span><input id="lineHeight" type="number" min="0.6" max="3" step="0.1"></label>
+              </div>
+              <div class="row-control">
+                <label class="color-field"><span>文字色</span><input id="textColor" type="color"><input id="textColorHex" type="text" maxlength="7"></label>
+                <div class="segmented" aria-label="文字揃え">
+                  <button type="button" data-align="left" title="左揃え"><span class="icon icon-align-left"></span></button><button type="button" data-align="center" title="中央揃え"><span class="icon icon-align-center"></span></button><button type="button" data-align="right" title="右揃え"><span class="icon icon-align-right"></span></button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="property-section">
+            <button type="button" class="section-title" aria-expanded="true"><span>位置とサイズ</span><i></i></button>
+            <div class="section-body field-grid four">
+              <label><span>X</span><input id="posX" type="number" step="1"></label><label><span>Y</span><input id="posY" type="number" step="1"></label><label><span>幅</span><input id="sizeW" type="number" min="1" step="1"></label><label><span>高さ</span><input id="sizeH" type="number" min="1" step="1"></label>
+            </div>
+          </section>
+
+          <section class="property-section">
+            <button type="button" class="section-title" aria-expanded="true"><span>ボックス</span><i></i></button>
+            <div class="section-body">
+              <label class="color-field wide"><span>背景</span><input id="fillColor" type="color"><input id="fillColorHex" type="text" maxlength="7"><button type="button" id="clearFillBtn">なし</button></label>
+              <div class="field-grid three"><label><span>角丸</span><div class="unit-input"><input id="borderRadius" type="number" min="0" max="300"><em>px</em></div></label><label><span>余白</span><div class="unit-input"><input id="padding" type="number" min="0" max="300"><em>px</em></div></label><label><span>不透明度</span><div class="unit-input"><input id="opacity" type="number" min="0" max="100"><em>%</em></div></label></div>
+            </div>
+          </section>
+
+          <section class="property-section" id="imageSection" hidden>
+            <button type="button" class="section-title" aria-expanded="true"><span>画像</span><i></i></button>
+            <div class="section-body"><button type="button" class="replace-image-btn" id="replaceImageBtn"><span class="icon icon-image"></span>画像を差し替える</button><div class="field-grid two"><label><span>フィット</span><select id="objectFit"><option value="cover">トリミング</option><option value="contain">全体を表示</option><option value="fill">引き伸ばす</option></select></label><label><span>代替テキスト</span><input id="altText" type="text"></label></div></div>
+          </section>
+        </form>
+        <footer class="inspector-footer"><span class="privacy-dot"></span>高精度変換もブラウザ内で完結します</footer>
+      </aside>
+    </div>
+
+    <footer class="statusbar"><div><span class="status-dot"></span><span id="statusText">準備完了</span></div><div><span id="activeElementStatus">未選択</span><span class="hash" id="projectHash">LOCAL</span></div></footer>
+  </div>
+
+  <div class="scrim" id="scrim" hidden></div>
+  <dialog class="modal import-modal" id="importModal">
+    <form method="dialog" class="modal-card" id="importForm">
+      <div class="modal-head"><div><span class="eyebrow">IMPORT</span><h2>HTMLを読み込む</h2><p>ファイルを選ぶか、HTMLコードを貼り付けてください。</p></div><button class="modal-close" value="cancel" aria-label="閉じる">×</button></div>
+      <div class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="HTMLファイルを選択"><div class="drop-icon"><span class="icon icon-code"></span></div><strong>HTMLファイルをドロップ</strong><span>またはタップして選択（.html / .htm）</span><button type="button" class="btn btn-outline" id="chooseHtmlBtn">ファイルを選ぶ</button></div>
+      <div class="or-divider"><span>またはコードを貼り付け</span></div>
+      <label class="code-label"><span>HTML</span><span>section / .slide / [data-slide] をスライドとして認識</span></label>
+      <textarea class="code-input" id="htmlInput" spellcheck="false" placeholder="&lt;section class=&quot;slide&quot;&gt;...&lt;/section&gt;"></textarea>
+      <div class="modal-actions"><button class="btn btn-quiet" value="cancel">キャンセル</button><button class="btn btn-primary" type="button" id="applyHtmlBtn">読み込んで編集</button></div>
+    </form>
+  </dialog>
+
+  <dialog class="modal export-modal" id="exportModal">
+    <div class="modal-card compact-card"><div class="export-visual"><div class="file-stack"><span>&lt;/&gt;</span><i>→</i><b>P</b></div></div><div class="export-copy"><span class="eyebrow">EXPORT</span><span class="engine-badge" id="exportEngineBadge"><i></i>HIGH-FIDELITY OSS</span><h2 id="exportTitle">PowerPointを作成中</h2><p id="exportMessage">文字・図形・画像を編集可能な要素へ変換しています。</p><div class="progress-track"><i id="exportProgress"></i></div><div class="export-stats" id="exportStats"><span>スライド <b id="exportSlideNum">0</b></span><span>変換要素 <b id="exportElementNum">0</b></span><span>注意 <b id="exportWarningNum">0</b></span></div><p class="export-warning" id="exportWarning" hidden></p><a class="btn btn-primary full" id="downloadGeneratedBtn" href="#" download hidden>PowerPointをダウンロード</a><button class="btn btn-outline full secondary-close" id="closeExportBtn" type="button" hidden>閉じる</button></div></div>
+  </dialog>
+
+  <dialog class="modal studio-modal" id="studioModal">
+    <div class="studio-card">
+      <header class="studio-modal-head">
+        <div><span class="eyebrow">DESIGN ENGINE</span><h2>デザイン制作スタジオ</h2><p>Style × Font × Layout × Image Prompt を組み合わせます。</p></div>
+        <button class="modal-close" id="closeStudioModalBtn" type="button" aria-label="閉じる">×</button>
+      </header>
+      <div class="studio-modal-body">
+        <nav class="studio-nav" aria-label="制作ツール">
+          <button class="is-active" data-studio-tab="styles"><span class="nav-glyph">◫</span><span>スタイル</span><small>Style Library</small></button>
+          <button data-studio-tab="fonts"><span class="nav-glyph">Aa</span><span>フォント</span><small>Typography</small></button>
+          <button data-studio-tab="image"><span class="nav-glyph">✦</span><span>AI画像</span><small>Image Lab</small></button>
+          <button data-studio-tab="quality"><span class="nav-glyph">✓</span><span>品質確認</span><small>Preflight</small></button>
+        </nav>
+
+        <section class="studio-view is-active" data-studio-view="styles">
+          <div class="view-toolbar">
+            <div><h3>Style Library</h3><p>監査済みv6を端末内に統合し、見本・YAML・配色・画像指示を制作へつなげます。</p></div>
+            <div class="toolbar-actions"><button class="subtle-action" id="importStylePackBtn" type="button">v6 / Style Packを読込</button><button class="primary-action" id="saveMyStyleBtn" type="button">My Styleに保存</button></div>
+          </div>
+          <div class="pack-status" id="packStatus" data-state="empty">
+            <div class="pack-status-icon">160</div>
+            <div><strong id="packStatusTitle">NotebookLM v6をローカル統合</strong><p id="packStatusText">v6 ZIPを読み込むと、画像160枚とYAMLをこの端末だけに保存します。外部送信はしません。</p></div>
+            <button class="subtle-action" id="removeStylePackBtn" type="button" hidden>端末から削除</button>
+          </div>
+          <div class="style-controls">
+            <label class="search-box"><span>⌕</span><input id="styleSearch" type="search" placeholder="スタイルを検索"></label>
+            <div class="filter-row" id="styleFilters" aria-label="スタイル分類"></div>
+          </div>
+          <div class="style-library-meta"><span id="styleCountLabel">12 styles</span><span>外部Style Pack対応</span></div>
+          <div class="style-grid" id="styleGrid"></div>
+          <div class="style-detail" id="styleDetail">
+            <img class="style-detail-preview" id="activeStylePreview" alt="" hidden>
+            <div><span class="detail-label">選択中</span><strong id="activeStyleName">Midnight Gradient</strong><p id="activeStyleDescription">深いネイビーに光を重ねたプレゼンテーションスタイル</p></div>
+            <div class="palette-dots" id="activePalette"></div>
+            <button class="subtle-action" id="copyStyleYamlBtn" type="button" hidden>YAMLをコピー</button>
+            <button class="primary-action" id="applyStyleBtn" type="button">デッキ全体に適用</button>
+          </div>
+        </section>
+
+        <section class="studio-view" data-studio-view="fonts">
+          <div class="view-toolbar">
+            <div><h3>Font Studio</h3><p>デザインとフォントを分離し、用途ごとに自由に組み合わせます。</p></div>
+            <button class="primary-action" id="uploadFontBtn" type="button">フォントファイルを追加</button>
+          </div>
+          <div class="font-preview"><span>PREVIEW</span><h4 id="fontPreviewHeading">伝わる資料を、美しく。</h4><p id="fontPreviewBody">読みやすさと雰囲気を両立し、PowerPointでも編集できる文字として保持します。</p><em id="fontPreviewLatin">Ideas become visible — 2026</em></div>
+          <div class="font-settings">
+            <label><span>見出し</span><select id="headingFontSelect"></select><small id="headingFontState">Web表示対応</small></label>
+            <label><span>本文</span><select id="bodyFontSelect"></select><small id="bodyFontState">Web表示対応</small></label>
+            <label><span>英数字</span><select id="latinFontSelect"></select><small id="latinFontState">Web表示対応</small></label>
+          </div>
+          <div class="font-presets" id="fontPresets"></div>
+          <div class="font-note"><strong>PowerPoint互換性</strong><p>受け取るPCに同じフォントがない場合は置換されます。高精度出力では可能な範囲でWebフォントを埋め込み、互換出力ではフォント名を保持します。</p></div>
+          <div class="view-footer"><button class="primary-action" id="applyFontsBtn" type="button">デッキ全体に適用</button></div>
+        </section>
+
+        <section class="studio-view" data-studio-view="image">
+          <div class="view-toolbar">
+            <div><h3>AI Image Lab</h3><p>現在のデザインに合う画像生成指示文を作り、生成画像をスライドへ戻します。</p></div>
+            <button class="subtle-action" id="addGeneratedImageBtn" type="button">生成画像を追加</button>
+          </div>
+          <div class="image-lab-grid">
+            <div class="image-form">
+              <label><span>画像にしたい内容</span><textarea id="imageSubject" rows="4" placeholder="例：高校生がAIの回答を鵜呑みにせず、問い直して思考を深める抽象図解"></textarea></label>
+              <div class="field-grid two"><label><span>構図</span><select id="imageComposition"><option value="right-space">右側に主役・左側を文字用に空ける</option><option value="left-space">左側に主役・右側を文字用に空ける</option><option value="center">中央構図</option><option value="wide-background">全面背景</option><option value="transparent-object">透過素材</option></select></label><label><span>比率</span><select id="imageRatio"><option value="16:9">16:9 スライド</option><option value="4:3">4:3 図解</option><option value="1:1">1:1 素材</option><option value="3:4">3:4 縦長</option></select></label></div>
+              <label class="toggle-row"><input id="allowPeople" type="checkbox"><span><strong>人物を使用する</strong><small>初期設定では人物を使いません</small></span></label>
+              <button class="primary-action full-action" id="buildImagePromptBtn" type="button">現在のスタイルで指示文を作成</button>
+            </div>
+            <div class="prompt-output">
+              <div class="prompt-output-head"><span>生成用プロンプト</span><button id="copyImagePromptBtn" type="button">コピー</button></div>
+              <textarea id="imagePromptOutput" spellcheck="false" placeholder="左側の入力から生成します"></textarea>
+              <div class="handoff-actions"><a class="subtle-action" href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT画像生成を開く</a><span>コピーした指示文を貼り付けてください</span></div>
+            </div>
+          </div>
+          <div class="image-style-strip" id="imageStyleStrip"></div>
+        </section>
+
+        <section class="studio-view" data-studio-view="quality">
+          <div class="view-toolbar">
+            <div><h3>Design Preflight</h3><p>書き出す前に、読みやすさ・フォント・変換互換性をまとめて確認します。</p></div>
+            <button class="primary-action" id="runQualityBtn" type="button">全ページを検査</button>
+          </div>
+          <div class="quality-summary" id="qualitySummary"><div class="quality-score"><strong>—</strong><span>/ 100</span></div><div><h4>まだ検査していません</h4><p>全ページを検査すると、直すべき箇所をページ別に表示します。</p></div></div>
+          <div class="quality-results" id="qualityResults"></div>
+          <div class="quality-criteria"><span>文字の重なり</span><span>はみ出し</span><span>極小文字</span><span>外部画像</span><span>フォント</span><span>PowerPoint互換性</span></div>
+        </section>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="modal output-modal" id="outputModal">
+    <div class="modal-card">
+      <div class="modal-head"><div><span class="eyebrow">EXPORT</span><h2>書き出し形式を選択</h2><p>編集用と完成表示用を、用途に合わせて使い分けられます。</p></div><button class="modal-close" id="closeOutputModalBtn" type="button" aria-label="閉じる">×</button></div>
+      <div class="output-grid">
+        <button id="exportHtmlChoice" type="button"><b>&lt;/&gt;</b><strong>HTML</strong><span>編集可能なスライド一式</span></button>
+        <button id="exportPngChoice" type="button"><b>PNG</b><strong>現在のスライド</strong><span>固定表示の画像</span></button>
+        <button id="exportPdfChoice" type="button"><b>PDF</b><strong>印刷・PDF保存</strong><span>全ページを固定表示</span></button>
+        <button id="exportPptxChoice" type="button"><b class="ppt-choice">P</b><strong>PowerPoint</strong><span>文字・図形を編集可能</span></button>
+      </div>
+    </div>
+  </dialog>
+
+  <input type="file" id="htmlFileInput" accept=".html,.htm,text/html" hidden>
+  <input type="file" id="imageFileInput" accept="image/*" hidden>
+  <input type="file" id="fontFileInput" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" hidden>
+  <input type="file" id="stylePackFileInput" accept=".zip,.json,.yaml,.yml,application/zip,application/json,text/yaml,text/x-yaml" hidden>
+  <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
+  <script src="vendor/pptxgen.bundle.js"></script>
+  <script src="vendor/fflate.js"></script>
+  <script src="app.js?v=6"></script>
+</body>
+</html>
