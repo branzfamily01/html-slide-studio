@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#13233f">
+<link rel="manifest" href="manifest.webmanifest">
+<title>LESSON 10 Interactive Prototype</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800;900&family=Noto+Serif+JP:wght@700;900&display=swap');
+:root{
+  --navy:#13233f;--navy2:#23416f;--ink:#202839;--muted:#697487;--paper:#fffdf8;
+  --line:#eadfce;--orange:#f3a34a;--orangeDeep:#a8520b;--green:#33772a;--purple:#5143a8;
+  --pink:#a13d6c;--blue:#116d87;--shadow:0 22px 58px rgba(55,40,22,.15)
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:"Noto Sans JP",system-ui,sans-serif;color:var(--ink);background:#ddd8d0}
+body{display:grid;place-items:center;padding:10px}
+button,select{font:inherit}
+.app{
+  width:min(1280px,calc(100vw - 20px),calc((100vh - 20px)*16/9));
+  height:min(720px,calc(100vh - 20px),calc((100vw - 20px)*9/16));
+  min-height:480px;position:relative;overflow:hidden;border-radius:24px;box-shadow:var(--shadow);
+  background:radial-gradient(circle at 92% 6%,rgba(243,163,74,.22),transparent 25%),linear-gradient(135deg,#fffdf8,#f4ecdf)
+}
+.topbar{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:rgba(255,255,255,.88);border-bottom:1px solid rgba(19,35,63,.08);backdrop-filter:blur(10px)}
+.brand{display:flex;align-items:center;gap:12px}.qid{font-size:23px;font-weight:900;color:var(--navy)}
+.phase{padding:6px 11px;border-radius:999px;font-size:12px;font-weight:900;letter-spacing:.08em;background:#f2e6d3;color:#7d450f}
+.actions{display:flex;gap:8px;align-items:center}.btn{border:1px solid #dad0c1;background:#fff;color:var(--navy);border-radius:12px;padding:8px 12px;font-weight:800;cursor:pointer}.btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+main{height:calc(100% - 60px);padding:14px 26px 18px;overflow:hidden}
+.prompt{display:grid;gap:10px}.question-card,.stage-card{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:20px;box-shadow:0 10px 28px rgba(65,47,24,.06)}
+.label{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900;letter-spacing:.08em}.label::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.label.question{color:var(--navy2);background:#eaf1ff}.label.answer{color:var(--green);background:#eaf8e4}.label.why{color:var(--purple);background:#ece8ff}.label.meaning{color:var(--pink);background:#ffeaf1}.label.output{color:var(--blue);background:#e5f6fb}.label.check{color:#50681f;background:#eef4df}
+.question-card{padding:14px 18px}.question-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}.instruction{font-size:12px;color:var(--muted);font-weight:700}.question-text{margin:0;padding:15px 18px;border-radius:16px;background:linear-gradient(135deg,#15284c,#263e69);color:#fff;font-size:25px;line-height:1.4;font-weight:800}
+.options{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.opt{padding:12px 10px;background:#fff;border:1px solid var(--line);border-radius:15px;text-align:center;font-size:19px;font-weight:850;color:var(--navy)}.opt.correct{background:linear-gradient(135deg,#eefbe7,#fff);border-color:#9bc88c}.opt.correct::after{content:" ✓";color:#2e7d32}
+.stage{margin-top:10px;height:calc(100% - 188px);min-height:0}.stage-card{display:none;height:100%;padding:16px 20px;overflow:auto}.stage-card.visible{display:block}.stage-card h2{font-family:"Noto Serif JP",serif;color:var(--navy);font-size:27px;line-height:1.2;margin:10px 0 12px}.stage-card p{font-size:18px;line-height:1.48;margin:8px 0}.stage-card small{font-size:14px;color:var(--muted);font-weight:700}
+.answer-box{display:flex;align-items:center;gap:18px;padding:18px 20px;border-radius:17px;background:linear-gradient(90deg,#edf9e7,#fff);border:1px solid #c8e1b8}.answer-box strong{font-size:31px;color:#2f6d18}.answer-box span{font-size:17px;color:#5c684c;font-weight:700}
+.why-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:10px}.teacher .why-grid{grid-template-columns:1fr 1fr 1fr}.why-box{padding:13px 15px;border-radius:16px;background:#fff;border:1px solid #eee5d8}.why-box h3{margin:0 0 8px;color:var(--navy);font-size:15px;letter-spacing:.04em}.why-box p,.why-box li{font-size:16px;line-height:1.45}.why-box ul{margin:0;padding-left:1.1em}.teacher-only{display:none}.teacher .teacher-only{display:block}.hlAnswer{background:linear-gradient(transparent 58%,#ffe19b 58%)}.hlRecent{background:linear-gradient(transparent 58%,#cfeef9 58%)}
+.center-card{display:flex;align-items:center;justify-content:center;text-align:center}.center-card .inner{max-width:940px}.center-card h2{font-size:30px}.center-card .big{font-size:31px;line-height:1.55;font-weight:900;color:var(--navy);margin:12px 0}.output-pill{display:inline-block;padding:7px 12px;border-radius:999px;background:#e5f6fb;color:var(--blue);font-size:12px;font-weight:900;letter-spacing:.1em}
+.english-box{padding:18px 20px;border-radius:17px;background:#fffaf0;border:1px solid #f0dfbd}.english{font-size:27px;line-height:1.48;font-weight:850;color:var(--navy)}.voice-row{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:12px}.voice-row label{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);font-weight:800}.voice-row select{border:1px solid #d8d0c2;border-radius:10px;padding:8px 10px;background:#fff;color:var(--navy);font-weight:800}
+.prompt.hidden{display:none}.stage.full{height:100%;margin-top:0}
+@media (max-width:900px){
+  html,body{background:#f4ecdf}body{display:block;padding:0}
+  .app{width:100%;height:auto;min-height:100vh;border-radius:0;box-shadow:none;overflow:visible}
+  .topbar{position:sticky;top:0;z-index:20;height:auto;min-height:58px;padding:8px 12px;gap:8px;flex-wrap:wrap}.qid{font-size:18px}.phase{font-size:10px}.actions{gap:6px}.btn{padding:7px 9px;font-size:13px}
+  main{height:auto;padding:12px 12px 24px;overflow:visible}.question-card{padding:12px}.instruction{display:none}.question-text{font-size:20px;padding:14px}.options{grid-template-columns:1fr 1fr}.opt{font-size:17px;padding:11px 8px}
+  .stage,.stage.full{height:auto;min-height:0;margin-top:10px}.stage-card{height:auto;min-height:260px;overflow:visible}.stage-card h2{font-size:23px}.stage-card p{font-size:17px}.answer-box{align-items:flex-start;flex-direction:column;gap:7px}.answer-box strong{font-size:27px}.why-grid,.teacher .why-grid{grid-template-columns:1fr}.center-card{min-height:340px}.center-card .big{font-size:25px}.english{font-size:22px}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app" aria-live="polite">
+  <header class="topbar">
+    <div class="brand"><div class="qid">LESSON 10　1(1)</div><div class="phase" id="phase">QUESTION</div></div>
+    <div class="actions">
+      <button class="btn" id="resetBtn" type="button">↶ Reset</button>
+      <button class="btn" id="modeBtn" type="button">表示：<span id="modeText">生徒用</span></button>
+      <button class="btn primary" id="nextBtn" type="button">次へ ▶</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="prompt" id="prompt">
+      <article class="question-card">
+        <div class="question-head"><span class="label question">QUESTION</span><span class="instruction">Choose the best answer.</span></div>
+        <p class="question-text">The number of students who come to class (　　) has been increasing recently.</p>
+      </article>
+      <div class="options">
+        <div class="opt" data-choice="1">① late</div><div class="opt" data-choice="2">② lately</div><div class="opt" data-choice="3">③ in late</div><div class="opt" data-choice="4">④ of lately</div>
+      </div>
+    </section>
+
+    <section class="stage" id="stage">
+      <article class="stage-card" data-step="1">
+        <span class="label answer">ANSWER</span>
+        <h2>正解</h2>
+        <div class="answer-box"><strong>① late</strong><span>まず「なぜ①なのか」を自分の言葉で説明する。</span></div>
+      </article>
+
+      <article class="stage-card" data-step="2">
+        <span class="label why">WHY?</span>
+        <h2>根拠</h2>
+        <div class="why-grid">
+          <div class="why-box">
+            <h3>判別ポイント</h3>
+            <p><b>late</b> = 「遅れて」／ <b>lately</b> = 「最近」</p>
+            <p>come to class <span class="hlAnswer"><b>late</b></span> で「授業に遅れて来る」。</p>
+            <p><span class="hlRecent">recently</span> がすでに「最近」を表す。</p>
+          </div>
+          <div class="why-box" id="studentWhy">
+            <h3>ここを言えればOK</h3>
+            <p>「recently があるので、空所には “最近” ではなく “遅れて” が入る」</p>
+          </div>
+          <div class="why-box teacher-only">
+            <h3>誤答分析</h3>
+            <ul><li>② lately：最近</li><li>③ in late：この形では不可</li><li>④ of lately：不可</li></ul>
+          </div>
+        </div>
+      </article>
+
+      <article class="stage-card center-card" data-step="3">
+        <div class="inner"><span class="label meaning">MEANING</span><h2>意味をつかむ</h2><p class="big">最近、授業に遅れて来る生徒の数が増えている。</p></div>
+      </article>
+
+      <article class="stage-card center-card" data-step="4">
+        <div class="inner"><span class="label output">OUTPUT</span><h2>英語で言ってみる</h2><span class="output-pill">ENGLISH, PLEASE</span><p class="big">最近、授業に遅れて来る生徒の数が増えている。</p><small>英文を見ずに、顔を上げて再生する。</small></div>
+      </article>
+
+      <article class="stage-card" data-step="5">
+        <span class="label check">CHECK ENGLISH</span><h2>英文を確認</h2>
+        <div class="english-box"><div class="english" data-speak="The number of students who come to class late has been increasing recently.">The number of students who come to class <span class="hlAnswer">late</span> has been increasing <span class="hlRecent">recently</span>.</div></div>
+        <div class="voice-row"><button class="btn primary" id="speakBtn" type="button">🔊 English</button><button class="btn" id="stopBtn" type="button">■ Stop</button><label>Speed<select id="rateSelect"><option value="0.8">0.8×</option><option value="1" selected>1.0×</option><option value="1.2">1.2×</option></select></label></div>
+      </article>
+    </section>
+  </main>
+</div>
+<script>
+(() => {
+  'use strict';
+  const MAX_STEP=5, phases=['QUESTION','ANSWER','WHY?','MEANING','OUTPUT','CHECK'];
+  let step=0, teacherMode=false;
+  const app=document.getElementById('app'), main=document.getElementById('main'), prompt=document.getElementById('prompt'), stage=document.getElementById('stage');
+  const phase=document.getElementById('phase'), modeText=document.getElementById('modeText'), nextBtn=document.getElementById('nextBtn');
+  const resetBtn=document.getElementById('resetBtn'), modeBtn=document.getElementById('modeBtn');
+
+  function render(){
+    app.classList.toggle('teacher',teacherMode);
+    phase.textContent=phases[step]; modeText.textContent=teacherMode?'教師用':'生徒用'; nextBtn.textContent=step===MAX_STEP?'最初へ ↶':'次へ ▶';
+    prompt.classList.toggle('hidden',step>=3); stage.classList.toggle('full',step>=3);
+    document.querySelectorAll('.stage-card').forEach(card=>card.classList.toggle('visible',Number(card.dataset.step)===step));
+    document.querySelectorAll('.opt').forEach(opt=>opt.classList.toggle('correct',step>=1&&opt.dataset.choice==='1'));
+  }
+  function cancelVoice(){if('speechSynthesis' in window)window.speechSynthesis.cancel()}
+  function next(){cancelVoice();step=step>=MAX_STEP?0:step+1;render()}
+  function reset(){cancelVoice();step=0;render()}
+  nextBtn.addEventListener('click',e=>{e.stopPropagation();next()}); resetBtn.addEventListener('click',e=>{e.stopPropagation();reset()});
+  modeBtn.addEventListener('click',e=>{e.stopPropagation();teacherMode=!teacherMode;render()});
+  main.addEventListener('click',e=>{if(e.target.closest('button,select,label'))return;next()});
+  document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();next()}if(e.code==='Escape'){e.preventDefault();reset()}});
+
+  const speakBtn=document.getElementById('speakBtn'),stopBtn=document.getElementById('stopBtn'),rateSelect=document.getElementById('rateSelect');
+  speakBtn.addEventListener('click',e=>{e.stopPropagation();if(!('speechSynthesis' in window)){alert('このブラウザは音声読み上げに対応していません。');return}const text=document.querySelector('[data-speak]')?.dataset.speak||'';cancelVoice();const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=Number(rateSelect.value)||1;const voices=speechSynthesis.getVoices();const v=voices.find(x=>/^en-US/i.test(x.lang))||voices.find(x=>/^en/i.test(x.lang));if(v)u.voice=v;speechSynthesis.speak(u)});
+  stopBtn.addEventListener('click',e=>{e.stopPropagation();cancelVoice()});
+  render();
+  if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+})();
+</script>
+</body>
+</html>
