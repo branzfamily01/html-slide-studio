@@ -1,0 +1,13 @@
+{
+  "name": "LESSON 10 Interactive Prototype",
+  "short_name": "L10 Prototype",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fffdf8",
+  "theme_color": "#13233f",
+  "icons": [
+    {"src":"../../icon-192.png","sizes":"192x192","type":"image/png"},
+    {"src":"../../icon-512.png","sizes":"512x512","type":"image/png"}
+  ]
+}
