@@ -112,6 +112,8 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Inter,"Not
   let future = [];
   let saveTimer = null;
   let thumbnailTimer = null;
+  let previewRefreshFrame = 0;
+  let currentFrameRenderToken = 0;
   let currentImageAction = "add";
   let dragState = null;
   let resizeObserver = null;
@@ -314,19 +316,40 @@ html,body{font-family:var(--body-font)}
 
   function renderAll() {
     els.slideCount.textContent = state.slides.length; els.slidePosition.textContent = `${state.current + 1} / ${state.slides.length}`; els.projectName.value = state.projectName;
-    renderSlideList(); renderCurrentSlide(); renderLayers(); if (!els.overview.hidden) renderOverview(); updateHash();
+    renderCurrentSlide(); renderSlideList(); renderLayers(); if (!els.overview.hidden) renderOverview(); updateHash();
+  }
+  function loadPreviewFrame(frame, index) {
+    if (!frame || frame.dataset.loaded === "1" || !state.slides[index]) return;
+    frame.dataset.loaded = "1"; frame.removeAttribute("src"); frame.srcdoc = composeDocument(state.slides[index].html);
+  }
+  function unloadPreviewFrame(frame) {
+    if (!frame || frame.dataset.loaded !== "1") return;
+    frame.dataset.loaded = "0"; frame.onload = null; frame.removeAttribute("srcdoc"); frame.src = "about:blank";
+  }
+  function refreshPreviewFrames(container, keepCurrent = false) {
+    if (!container || container.hidden) return;
+    const containerRect = container.getBoundingClientRect(); const top = Math.max(0, containerRect.top) - 360; const bottom = Math.min(innerHeight, containerRect.bottom) + 360;
+    container.querySelectorAll("[data-index]").forEach(item => {
+      const index = Number(item.dataset.index); const rect = item.getBoundingClientRect(); const nearViewport = rect.bottom >= top && rect.top <= bottom; const nearCurrent = keepCurrent && Math.abs(index - state.current) <= 1; const frame = item.querySelector("iframe");
+      if (nearViewport || nearCurrent) loadPreviewFrame(frame, index); else unloadPreviewFrame(frame);
+    });
+  }
+  function schedulePreviewRefresh() {
+    if (previewRefreshFrame) return;
+    previewRefreshFrame = requestAnimationFrame(() => { previewRefreshFrame = 0; refreshPreviewFrames(els.slideList, true); if (!els.overview.hidden) refreshPreviewFrames(els.overviewGrid); updateThumbnailScales(); });
   }
   function renderSlideList() {
-    els.slideList.innerHTML = "";
+    const previousScrollTop = els.slideList.scrollTop; els.slideList.innerHTML = "";
     state.slides.forEach((slide, index) => {
       const row = document.createElement("div"); row.className = `slide-item${index === state.current ? " is-active" : ""}`; row.dataset.index = index;
       const num = document.createElement("span"); num.className = "slide-number"; num.textContent = String(index + 1).padStart(2, "0");
       const shell = document.createElement("div"); shell.className = "thumb-shell";
-      const frame = document.createElement("iframe"); frame.setAttribute("sandbox", "allow-same-origin"); frame.tabIndex = -1; frame.title = `${index + 1}枚目のサムネイル`; frame.srcdoc = composeDocument(slide.html);
+      const frame = document.createElement("iframe"); frame.setAttribute("sandbox", "allow-same-origin"); frame.tabIndex = -1; frame.title = `${index + 1}枚目のサムネイル`;
       const menu = document.createElement("button"); menu.className = "slide-menu"; menu.type = "button"; menu.textContent = "⋯"; menu.title = "スライド操作"; menu.addEventListener("click", event => { event.stopPropagation(); openSlideMenu(index, menu); });
       shell.append(frame, menu); row.append(num, shell); row.addEventListener("click", () => selectSlide(index)); els.slideList.append(row);
+      if (state.slides.length <= 8 || Math.abs(index - state.current) <= 1) loadPreviewFrame(frame, index);
     });
-    requestAnimationFrame(updateThumbnailScales);
+    requestAnimationFrame(() => { els.slideList.scrollTop = previousScrollTop; schedulePreviewRefresh(); });
   }
   function updateThumbnailScales() {
     document.querySelectorAll(".thumb-shell").forEach(shell => shell.style.setProperty("--thumb-scale", shell.clientWidth / WIDTH));
@@ -334,11 +357,23 @@ html,body{font-family:var(--body-font)}
   }
   function renderCurrentSlide() {
     state.selectedPath = null; state.selectedType = null; closeInspectorSelection();
-    els.slideFrame.onload = () => { prepareFrame(); fitCanvas(); };
-    els.slideFrame.srcdoc = composeDocument(state.slides[state.current].html, true);
+    const documentHtml = composeDocument(state.slides[state.current].html, true); const renderToken = ++currentFrameRenderToken; let prepared = false;
+    const finish = () => {
+      if (prepared || renderToken !== currentFrameRenderToken) return prepared;
+      const doc = els.slideFrame.contentDocument; if (!doc || !findSlideRoot(doc)) return false;
+      prepared = true; prepareFrame(); fitCanvas(); return true;
+    };
+    const navigate = frame => { frame.onload = finish; frame.removeAttribute("src"); frame.srcdoc = documentHtml; };
+    navigate(els.slideFrame); fitCanvas(); requestAnimationFrame(finish); setTimeout(finish, 120);
+    setTimeout(() => {
+      if (finish() || renderToken !== currentFrameRenderToken) return;
+      const replacement = els.slideFrame.cloneNode(false); els.slideFrame.replaceWith(replacement); els.slideFrame = replacement; navigate(replacement); requestAnimationFrame(finish);
+    }, 700);
   }
   function selectSlide(index) {
-    state.current = Math.max(0, Math.min(index, state.slides.length - 1)); state.selectedPath = null; renderAll(); persistSoon(); closeMobilePanels();
+    state.current = Math.max(0, Math.min(index, state.slides.length - 1)); state.selectedPath = null; els.slidePosition.textContent = `${state.current + 1} / ${state.slides.length}`;
+    document.querySelectorAll(".slide-item").forEach(row => row.classList.toggle("is-active", Number(row.dataset.index) === state.current));
+    renderCurrentSlide(); renderLayers(); updateHash(); persistSoon(); closeMobilePanels();
   }
   function openSlideMenu(index, anchor) {
     const existing = document.querySelector(".slide-popover"); if (existing) existing.remove();
@@ -366,7 +401,7 @@ html,body{font-family:var(--body-font)}
     doc.addEventListener("click", frameClick, true); doc.addEventListener("dblclick", frameDoubleClick, true); doc.addEventListener("pointerdown", framePointerDown, true);
     doc.addEventListener("keydown", event => { if ((event.key === "Backspace" || event.key === "Delete") && state.selectedPath && doc.activeElement?.getAttribute("contenteditable") !== "true") { event.preventDefault(); deleteSelectedElement(); } });
   }
-  function findSlideRoot(doc) { return doc.querySelector("[data-slide], .slide, section") || doc.body.firstElementChild; }
+  function findSlideRoot(doc) { if (!doc?.body) return null; return doc.querySelector("[data-slide], .slide, section") || doc.body.firstElementChild; }
   function makeElementsSelectable(root) {
     const candidates = root.querySelectorAll("h1,h2,h3,h4,h5,h6,p,span,strong,em,small,div,article,section,img,svg,table,ul,ol,blockquote");
     candidates.forEach(el => {
@@ -485,7 +520,7 @@ html,body{font-family:var(--body-font)}
     const doc = els.slideFrame.contentDocument; doc?.body.classList.toggle("studio-preview", mode === "preview"); if (mode === "preview") selectElement(null); setStatus(mode === "preview" ? "プレビュー中" : "編集モード");
   }
   function renderOverview() {
-    els.overviewGrid.innerHTML = ""; state.slides.forEach((slide, index) => { const item = document.createElement("div"); item.className = "overview-item"; const card = document.createElement("div"); card.className = "overview-card"; const frame = document.createElement("iframe"); frame.setAttribute("sandbox", "allow-same-origin"); frame.tabIndex = -1; frame.srcdoc = composeDocument(slide.html); card.appendChild(frame); item.append(card, Object.assign(document.createElement("p"), { textContent: `${String(index + 1).padStart(2,"0")}  ${slide.name}` })); item.onclick = () => { selectSlide(index); closeOverview(); }; els.overviewGrid.appendChild(item); }); requestAnimationFrame(updateThumbnailScales);
+    els.overviewGrid.innerHTML = ""; state.slides.forEach((slide, index) => { const item = document.createElement("div"); item.className = "overview-item"; item.dataset.index = index; const card = document.createElement("div"); card.className = "overview-card"; const frame = document.createElement("iframe"); frame.setAttribute("sandbox", "allow-same-origin"); frame.tabIndex = -1; card.appendChild(frame); item.append(card, Object.assign(document.createElement("p"), { textContent: `${String(index + 1).padStart(2,"0")}  ${slide.name}` })); item.onclick = () => { selectSlide(index); closeOverview(); }; els.overviewGrid.appendChild(item); if (state.slides.length <= 8) loadPreviewFrame(frame, index); }); requestAnimationFrame(schedulePreviewRefresh);
   }
   function openOverview() { renderOverview(); els.overview.hidden = false; els.canvasArea.hidden = true; }
   function closeOverview() { els.overview.hidden = true; els.canvasArea.hidden = false; fitCanvas(); }
@@ -781,7 +816,8 @@ html,body{font-family:var(--body-font)}
     els.mobileNavBtn.onclick=()=>openMobilePanel(els.slidePanel); els.mobileInspectorBtn.onclick=openInspector; els.closeInspectorBtn.onclick=closeMobilePanels; els.scrim.onclick=closeMobilePanels;
     els.brandHome.onclick=event=>{event.preventDefault();selectSlide(0);};
     document.addEventListener("keydown",event=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="z"){event.preventDefault();if(event.shiftKey)redo();else undo();}if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="s"){event.preventDefault();exportHtml();}if(event.key==="Escape")closeMobilePanels();});
-    window.addEventListener("resize",()=>{clearTimeout(thumbnailTimer);thumbnailTimer=setTimeout(()=>{fitCanvas();updateThumbnailScales();},80);});
+    els.slideList.addEventListener("scroll",schedulePreviewRefresh,{passive:true}); els.overview.addEventListener("scroll",schedulePreviewRefresh,{passive:true}); window.addEventListener("scroll",schedulePreviewRefresh,{passive:true});
+    window.addEventListener("resize",()=>{clearTimeout(thumbnailTimer);thumbnailTimer=setTimeout(()=>{fitCanvas();schedulePreviewRefresh();},80);});
     resizeObserver=new ResizeObserver(()=>{fitCanvas();updateThumbnailScales();}); resizeObserver.observe(els.stage); resizeObserver.observe(els.slideList);
   }
 
@@ -794,7 +830,7 @@ html,body{font-family:var(--body-font)}
         refreshing = true;
         location.reload();
       });
-      navigator.serviceWorker.register("sw.js?v=7").then(registration => registration.update()).catch(()=>{});
+      navigator.serviceWorker.register("sw.js?v=12").then(registration => registration.update()).catch(()=>{});
     }
   }
   init();

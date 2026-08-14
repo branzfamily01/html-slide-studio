@@ -30,7 +30,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 button { border: 0; }
 [hidden] { display: none !important; }
 
-.app-shell { width: 100vw; height: 100dvh; min-width: 320px; display: grid; grid-template-rows: var(--topbar-h) minmax(0, 1fr) var(--status-h); background: var(--surface); }
+.app-shell { width: 100vw; height: 100vh; height: 100dvh; min-width: 320px; display: grid; grid-template-rows: var(--topbar-h) minmax(0, 1fr) var(--status-h); background: var(--surface); }
 .topbar { position: relative; z-index: 30; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 0 16px 0 18px; background: rgba(252,251,248,.98); border-bottom: 1px solid #e6e3dc; box-shadow: 0 2px 10px rgba(25,35,55,.035); }
 .brand-group, .top-actions, .brand, .project-name-wrap { display: flex; align-items: center; min-width: 0; }
 .brand-group { gap: 14px; }
@@ -71,8 +71,8 @@ a.btn { text-decoration: none; }
 .ppt-badge { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 4px; background: var(--orange); color: white; font-weight: 850; }
 .mobile-only { display: none; }
 
-.workspace { display: grid; grid-template-columns: var(--left-w) minmax(0, 1fr) var(--right-w); min-height: 0; }
-.slide-panel, .inspector { position: relative; z-index: 20; min-width: 0; background: var(--panel); }
+.workspace { display: grid; grid-template-columns: var(--left-w) minmax(0, 1fr) var(--right-w); grid-template-rows: minmax(0, 1fr); min-height: 0; overflow: hidden; }
+.slide-panel, .inspector { position: relative; z-index: 20; min-width: 0; min-height: 0; background: var(--panel); }
 .slide-panel { display: flex; flex-direction: column; border-right: 1px solid var(--line); }
 .panel-tabs { display: grid; grid-template-columns: 1fr 1fr; height: 48px; border-bottom: 1px solid var(--line); }
 .panel-tab { position: relative; background: white; color: #727d8e; font-size: 11px; font-weight: 700; cursor: pointer; }
