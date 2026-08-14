@@ -2,7 +2,7 @@
   "name": "HTML Slide Studio 2.0",
   "short_name": "Slide Studio",
   "description": "HTML、Style Pack、フォント、AI画像制作を統合し、編集可能なPowerPointへ変換するスライドスタジオ",
-  "start_url": "./index.html?source=pwa-v6",
+  "start_url": "./index.html?source=pwa-v7",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f4f5f7",

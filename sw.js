@@ -1,5 +1,5 @@
-const CACHE = "html-slide-studio-v6";
-const CORE = ["./index.html", "./styles.css?v=6", "./app.js?v=6", "./icon.svg", "./icon-192.png", "./icon-512.png", "./manifest.webmanifest", "./vendor/pptxgen.bundle.js", "./vendor/dom-to-pptx.bundle.js", "./vendor/fflate.js"];
+const CACHE = "html-slide-studio-v7";
+const CORE = ["./index.html", "./styles.css?v=7", "./app.js?v=7", "./icon.svg", "./icon-192.png", "./icon-512.png", "./manifest.webmanifest", "./vendor/pptxgen.bundle.js", "./vendor/dom-to-pptx.bundle.js", "./vendor/fflate.js"];
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)).then(() => self.skipWaiting()));

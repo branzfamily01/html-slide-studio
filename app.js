@@ -251,7 +251,12 @@ html,body{font-family:var(--body-font)}
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
       if (saved && Array.isArray(saved.slides) && saved.slides.length) {
-        state.projectName = saved.projectName || state.projectName; state.styles = saved.styles || ""; state.slides = saved.slides; state.current = Math.min(saved.current || 0, saved.slides.length - 1);
+        const repairedSlides = saved.slides.map((slide, index) => {
+          const doc = new DOMParser().parseFromString(`<!doctype html><body>${String(slide?.html || "")}</body>`, "text/html"); const root = doc.body.firstElementChild;
+          if (!root) return null; normalizeImportedRoot(root); return { ...slide, id:slide.id || uid(), name:slide.name || `スライド ${index + 1}`, html:root.outerHTML };
+        }).filter(Boolean);
+        if (!repairedSlides.length) return;
+        state.projectName = saved.projectName || state.projectName; state.styles = saved.styles || ""; state.slides = repairedSlides; state.current = Math.min(saved.current || 0, repairedSlides.length - 1);
         state.theme = saved.theme || state.theme; state.fonts = saved.fonts || { heading:state.theme.headingFont, body:state.theme.bodyFont, latin:state.theme.latinFont };
         state.favorites = saved.favorites || []; state.myStyles = saved.myStyles || []; state.importedThemes = saved.importedThemes || []; selectedThemeId = state.theme.id;
       }
@@ -275,7 +280,11 @@ html,body{font-family:var(--body-font)}
       [data-studio-selectable]{cursor:pointer}.studio-selected{outline:3px solid #1687f8!important;outline-offset:3px;position:relative}.studio-selected::after{content:"";position:absolute;right:-7px;bottom:-7px;width:12px;height:12px;border:2px solid white;border-radius:2px;background:#1687f8;box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:nwse-resize}.studio-hover{outline:2px solid rgba(22,135,248,.38);outline-offset:2px}
       body.studio-preview [data-studio-selectable]{cursor:default}body.studio-preview .studio-selected,body.studio-preview .studio-hover{outline:0!important}body.studio-preview .studio-selected::after{display:none}
     </style>` : "";
-    return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=1280"><link href="${GOOGLE_FONT_LINK}" rel="stylesheet"><style>${state.styles}\n${currentThemeCss()}</style>${editing}</head><body>${slideHtml}</body></html>`;
+    const visibilityRecovery = `<style id="studio-visibility-recovery">
+      html,body{display:block!important;visibility:visible!important;opacity:1!important;width:${WIDTH}px!important;height:${HEIGHT}px!important;margin:0!important;overflow:hidden!important}
+      body>:first-child{display:block!important;visibility:visible!important;opacity:1!important;position:relative!important;left:0!important;top:0!important;width:${WIDTH}px!important;height:${HEIGHT}px!important;transform:none!important;clip:auto!important;clip-path:none!important;content-visibility:visible!important}
+    </style>`;
+    return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=1280"><link href="${GOOGLE_FONT_LINK}" rel="stylesheet"><style>${state.styles}\n${currentThemeCss()}</style>${visibilityRecovery}${editing}</head><body>${slideHtml}</body></html>`;
   }
 
   function composeExportDocument() {
@@ -483,7 +492,7 @@ html,body{font-family:var(--body-font)}
 
   function renderImportedHtml(source) {
     const parser = new DOMParser(); const doc = sanitizeImportedDocument(parser.parseFromString(source, "text/html"));
-    let roots = Array.from(doc.querySelectorAll("[data-slide], section.slide, .slide[data-slide-id]"));
+    let roots = Array.from(doc.querySelectorAll("[data-slide], section.slide, .slide[data-slide-id], .slides > section"));
     if (!roots.length) roots = Array.from(doc.querySelectorAll("body > section, body > .slide"));
     if (!roots.length && doc.body.firstElementChild) roots = [doc.body.firstElementChild];
     if (!roots.length) throw new Error("スライドとして読み込めるHTML要素が見つかりませんでした");
@@ -491,7 +500,12 @@ html,body{font-family:var(--body-font)}
     const slides = roots.map((root, index) => { const copy = root.cloneNode(true); copy.removeAttribute("data-slide"); if (!copy.classList.contains("slide")) copy.classList.add("slide"); normalizeImportedRoot(copy); return { id: uid(), name: root.getAttribute("data-title") || `スライド ${index + 1}`, html: copy.outerHTML }; });
     pushHistory(); state.styles = `${styleText}\nhtml,body{margin:0;width:100%;height:100%;overflow:hidden}\nbody{width:1280px;height:720px}\n.slide{width:1280px;height:720px;overflow:hidden}`; state.slides = slides; state.current = 0; state.selectedPath = null; renderAll(); persistSoon();
   }
-  function normalizeImportedRoot(root) { root.style.width = root.style.width || "1280px"; root.style.height = root.style.height || "720px"; root.style.overflow = "hidden"; root.querySelectorAll("img").forEach(img => { if (img.src && !img.src.startsWith("data:") && !img.src.startsWith("blob:")) img.setAttribute("crossorigin", "anonymous"); }); }
+  function normalizeImportedRoot(root) {
+    root.removeAttribute("hidden"); root.removeAttribute("inert"); root.removeAttribute("aria-hidden");
+    ["display","visibility","opacity","position","left","right","top","bottom","transform","clip","clip-path","content-visibility"].forEach(property => root.style.removeProperty(property));
+    root.style.width = root.style.width || "1280px"; root.style.height = root.style.height || "720px"; root.style.overflow = "hidden";
+    root.querySelectorAll("img").forEach(img => { if (img.src && !img.src.startsWith("data:") && !img.src.startsWith("blob:")) img.setAttribute("crossorigin", "anonymous"); });
+  }
   function handleHtmlFile(file) {
     if (!file || !/\.html?$/i.test(file.name)) return showToast("HTMLファイルを選んでください", true); const reader = new FileReader(); reader.onload = () => { els.htmlInput.value = String(reader.result || ""); setStatus(`${file.name} を読み込みました`); }; reader.onerror = () => showToast("ファイルを読み込めませんでした", true); reader.readAsText(file);
   }
@@ -780,7 +794,7 @@ html,body{font-family:var(--body-font)}
         refreshing = true;
         location.reload();
       });
-      navigator.serviceWorker.register("sw.js?v=6").then(registration => registration.update()).catch(()=>{});
+      navigator.serviceWorker.register("sw.js?v=7").then(registration => registration.update()).catch(()=>{});
     }
   }
   init();
