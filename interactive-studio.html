@@ -15,7 +15,58 @@
       <span>Interactive Lesson を準備しています…</span>
     </div>
   </div>
+
+  <template id="demoLesson">
+<style>
+:root{--navy:#14213d;--ink:#1d2433;--orange:#f6a547;--line:#e8dfd0;--red:#b44343}
+*{box-sizing:border-box}html,body{margin:0;width:1280px;height:720px;overflow:hidden;background:#ede6dc;color:var(--ink);font-family:"Noto Sans JP",system-ui,sans-serif}
+.slide{position:relative;width:1280px;height:720px;overflow:hidden;padding:46px 64px 40px;background:radial-gradient(circle at 1110px 85px,rgba(246,165,71,.22),transparent 230px),radial-gradient(circle at 105px 650px,rgba(142,202,230,.25),transparent 250px),linear-gradient(135deg,#fffdf8,#f7efe5)}
+.top{display:flex;align-items:center;justify-content:space-between}.qno{font-size:19px;font-weight:900;letter-spacing:.12em;color:#a85b18}.progress{font-size:14px;font-weight:800;color:#768198}
+.question-block{margin-top:17px}.question{background:var(--navy);color:white;border-radius:24px;padding:25px 30px;font-size:34px;line-height:1.42;font-weight:800;box-shadow:0 18px 36px rgba(20,33,61,.16)}
+.answer-slot{display:inline-block;min-width:128px;text-align:center;color:#ffd166;border-bottom:3px solid #ffd166}.choices{display:flex;gap:14px;margin-top:14px}.choice{min-width:170px;padding:11px 17px;border:2px solid #d8d1c5;border-radius:15px;background:#fff;font-size:22px;font-weight:900}.choice.correct{border-color:#e79736;background:#fff4df;color:#a65500}
+.content{position:absolute;left:64px;right:64px;top:310px;height:310px}body:not(.studio-preview) .content .card[data-step]{display:none}body:not(.studio-preview) .content .card[data-step="1"]{display:block}.card{position:absolute;inset:0;border:1px solid var(--line);border-radius:22px;background:rgba(255,255,255,.93);padding:23px 27px;box-shadow:0 14px 34px rgba(82,58,26,.08)}.label{font-size:15px;font-weight:900;letter-spacing:.16em;color:#8d6034}.answer-word{font-size:58px;font-weight:950;color:#bd5b00;margin-top:8px}.why-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:14px}.mini{padding:16px 18px;border-radius:16px;background:#f7f3ec}.mini strong{display:block;font-size:25px;color:var(--navy);margin-bottom:6px}.mini p{margin:0;font-size:19px;line-height:1.5}.evidence{margin-top:14px;font-size:22px;font-weight:800}.wrong{border-left:7px solid var(--red)}.wrong .label{color:var(--red)}.output{text-align:center;display:grid;place-items:center}.output .jp{font-size:34px;line-height:1.5;font-weight:900;color:var(--navy);max-width:900px}.output small{font-size:18px;color:#7a8497;font-weight:800}.check{display:flex;flex-direction:column;justify-content:center}.english{font-size:32px;line-height:1.5;font-weight:900;color:var(--navy)}.english b{color:#bd5b00}.speak{align-self:flex-start;margin-top:18px;border:0;border-radius:999px;background:var(--navy);color:white;padding:12px 20px;font-size:18px;font-weight:900}.controller{display:none!important}
+</style>
+<section class="slide" data-slide data-title="LESSON 10 Q1" data-question-id="L10-Q01" data-step0-label="QUESTION">
+  <div class="top"><div class="qno">LESSON 10 · Q1</div><div class="progress" data-lesson-progress>QUESTION · 0 / 5</div></div>
+  <div class="question-block" id="q1QuestionBlock">
+    <div class="question">The number of students who come to class <span class="answer-slot" id="q1AnswerSlot">______</span> has been increasing <span id="q1Recently">recently</span>.</div>
+    <div class="choices"><div class="choice" id="q1LateChoice">A&nbsp;&nbsp;late</div><div class="choice">B&nbsp;&nbsp;lately</div></div>
+  </div>
+  <span class="controller" data-step="1" data-step-label="ANSWER" data-action="replace" data-target="#q1AnswerSlot" data-value="late"></span>
+  <span class="controller" data-step="1" data-action="highlight" data-target="#q1LateChoice"></span>
+  <span class="controller" data-step="3" data-step-label="WHY NOT?" data-action="highlight" data-target="#q1Recently"></span>
+  <span class="controller" data-step="4" data-step-label="OUTPUT" data-action="hide" data-target="#q1QuestionBlock"></span>
+  <div class="content" data-step-scope="exclusive">
+    <article class="card" data-step="1" data-step-label="ANSWER" data-action="reveal"><div class="label">ANSWER</div><div class="answer-word">late</div></article>
+    <article class="card" data-step="2" data-step-label="WHY?" data-action="reveal"><div class="label">WHY?</div><div class="why-grid"><div class="mini"><strong>late</strong><p>「遅れて」— come to class を説明する副詞。</p></div><div class="mini"><strong>lately</strong><p>「最近」— 時を表す副詞。</p></div></div><div class="evidence">ここでは <b>come to class late</b> ＝「授業に遅れて来る」</div></article>
+    <article class="card wrong" data-step="3" data-action="reveal"><div class="label">WHY NOT?</div><div class="why-grid"><div class="mini"><strong>lately ×</strong><p>lately は「最近」。ここで必要なのは「遅れて来る」の意味。</p></div><div class="mini"><strong>recently</strong><p>文末にすでに「最近」を表す語がある。</p></div></div><div class="evidence">lately と recently の意味を混同しない。</div></article>
+    <article class="card output" data-step="4" data-action="reveal"><div><div class="label">OUTPUT</div><div class="jp">授業に遅れて来る生徒の数が、最近増えている。</div><small>英語を見ずに言ってみよう。</small></div></article>
+    <article class="card check" data-step="5" data-step-label="CHECK" data-action="reveal"><div class="label">CHECK</div><div class="english">The number of students who come to class <b>late</b> has been increasing recently.</div><button class="speak" type="button" data-action="speak" data-speak="The number of students who come to class late has been increasing recently." data-speak-lang="en-US" data-speak-rate="0.9">🔊 英文を再生</button></article>
+  </div>
+</section>
+  </template>
+
   <script src="interactive-studio-runtime.js"></script>
-  <script>document.getElementById('studioHost').src='./index.html';</script>
+  <script>
+  (()=>{
+    const host=document.getElementById('studioHost');
+    const tpl=document.getElementById('demoLesson');
+    let loaded=false;
+    function autoLoadDemo(){
+      if(loaded)return;
+      const d=host.contentDocument;
+      const input=d?.getElementById('htmlInput');
+      const apply=d?.getElementById('applyHtmlBtn');
+      const lesson=d?.getElementById('lessonModeBtn');
+      if(!input||!apply||!lesson){setTimeout(autoLoadDemo,100);return;}
+      loaded=true;
+      input.value=tpl.innerHTML.trim();
+      apply.click();
+      setTimeout(()=>d.getElementById('lessonModeBtn')?.click(),350);
+    }
+    host.addEventListener('load',()=>setTimeout(autoLoadDemo,120));
+    host.src='./index.html';
+  })();
+  </script>
 </body>
 </html>
