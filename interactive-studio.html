@@ -9,12 +9,13 @@
 </head>
 <body>
   <div class="interactive-shell">
-    <iframe id="studioHost" src="./index.html" title="HTML Slide Studio Interactive" allow="clipboard-read; clipboard-write"></iframe>
+    <iframe id="studioHost" src="about:blank" title="HTML Slide Studio Interactive" allow="clipboard-read; clipboard-write"></iframe>
     <div class="boot-card" id="bootCard" role="status" aria-live="polite">
       <strong>HTML Slide Studio</strong>
       <span>Interactive Lesson を準備しています…</span>
     </div>
   </div>
   <script src="interactive-studio-runtime.js"></script>
+  <script>document.getElementById('studioHost').src='./index.html';</script>
 </body>
 </html>
