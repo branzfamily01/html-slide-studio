@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#15213a">
+  <title>HTML Slide Studio｜Interactive Lesson Prototype</title>
+  <link rel="stylesheet" href="interactive-studio.css">
+</head>
+<body>
+  <div class="interactive-shell">
+    <iframe id="studioHost" src="./index.html" title="HTML Slide Studio Interactive" allow="clipboard-read; clipboard-write"></iframe>
+    <div class="boot-card" id="bootCard" role="status" aria-live="polite">
+      <strong>HTML Slide Studio</strong>
+      <span>Interactive Lesson を準備しています…</span>
+    </div>
+  </div>
+  <script src="interactive-studio-runtime.js"></script>
+</body>
+</html>
