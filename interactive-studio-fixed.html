@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#15213a">
+<title>HTML Slide Studio｜Interactive Lesson Fixed</title>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#eef1f6}
+#prototype{display:block;width:100vw;height:100dvh;border:0;background:#eef1f6}
+</style>
+</head>
+<body>
+<iframe id="prototype" src="./interactive-studio.html" title="HTML Slide Studio Interactive Fixed"></iframe>
+<script>
+(()=>{
+  'use strict';
+  const prototype=document.getElementById('prototype');
+  let lastSlideDoc=null;
+
+  function patch(){
+    let prototypeDoc,studioDoc,slideDoc;
+    try{
+      prototypeDoc=prototype.contentDocument;
+      const studioHost=prototypeDoc?.getElementById('studioHost');
+      studioDoc=studioHost?.contentDocument;
+      const slideFrame=studioDoc?.getElementById('slideFrame');
+      slideDoc=slideFrame?.contentDocument;
+    }catch{return;}
+    if(!slideDoc?.head)return;
+    if(lastSlideDoc!==slideDoc)lastSlideDoc=slideDoc;
+    if(slideDoc.getElementById('q1ContrastFix'))return;
+
+    const style=slideDoc.createElement('style');
+    style.id='q1ContrastFix';
+    style.textContent=`
+      html body .slide[data-question-id="L10-Q01"]{
+        background:
+          radial-gradient(circle at 1110px 85px,rgba(246,165,71,.22),transparent 230px),
+          radial-gradient(circle at 105px 650px,rgba(142,202,230,.25),transparent 250px),
+          linear-gradient(135deg,#fffdf8,#f7efe5)!important;
+        color:#1d2433!important;
+      }
+      html body .slide[data-question-id="L10-Q01"] .content .card{
+        background:rgba(255,255,255,.96)!important;
+        color:#1d2433!important;
+      }
+      html body .slide[data-question-id="L10-Q01"] .content .card[data-step]:not(.studio-runtime-hidden){
+        display:block!important;
+      }
+      html body .slide[data-question-id="L10-Q01"] .output.card[data-step]:not(.studio-runtime-hidden){
+        display:grid!important;
+      }
+      html body .slide[data-question-id="L10-Q01"] .check.card[data-step]:not(.studio-runtime-hidden){
+        display:flex!important;
+      }
+      html body .slide[data-question-id="L10-Q01"] .question{
+        background:#14213d!important;color:#fff!important;
+      }
+      html body .slide[data-question-id="L10-Q01"] .mini{
+        background:#f7f3ec!important;color:#1d2433!important;
+      }
+      html body .slide[data-question-id="L10-Q01"] .jp,
+      html body .slide[data-question-id="L10-Q01"] .english,
+      html body .slide[data-question-id="L10-Q01"] .evidence{
+        color:#14213d!important;
+      }
+    `;
+    slideDoc.head.appendChild(style);
+  }
+
+  prototype.addEventListener('load',()=>{
+    patch();
+    setInterval(patch,120);
+  });
+})();
+</script>
+</body>
+</html>
